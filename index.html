@@ -609,6 +609,7 @@
       document.body.classList.remove('locked');
       document.getElementById('authGate').classList.add('hidden');
       render();
+      initNotifications();
     }
 
     if (sessionStorage.getItem(AUTH_KEY) === 'true') {
@@ -635,6 +636,73 @@
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
+    }
+
+    // --- Scheduled notifications ---
+    const NOTIF_KEY = 'schedule-tracker-notif';
+    const MIDDAY_HOUR = 13;
+    const EVENING_HOUR = 20;
+
+    function getTodayDayData() {
+      const dow = new Date().getDay();
+      const idx = dow === 0 ? 6 : dow - 1;
+      return state.days[idx];
+    }
+
+    function buildNotifBody(type) {
+      const day = getTodayDayData();
+      if (!day) return null;
+      const done = day.tasks.filter(t => t.done);
+      const remaining = day.tasks.filter(t => !t.done);
+      if (type === 'midday') {
+        return `${day.day}: ${done.length} task${done.length !== 1 ? 's' : ''} completed so far.\n` +
+               `${remaining.length} still to go: ${remaining.slice(0, 3).map(t => t.text).join(', ')}` +
+               (remaining.length > 3 ? ` (+${remaining.length - 3} more)` : '');
+      } else {
+        if (remaining.length === 0) {
+          return `${day.day}: All ${done.length} tasks completed! Great job.`;
+        }
+        return `${day.day}: ${remaining.length} task${remaining.length !== 1 ? 's' : ''} still remaining:\n` +
+               remaining.map(t => '- ' + t.text).join('\n');
+      }
+    }
+
+    function getNotifRecord() {
+      try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch(e) { return {}; }
+    }
+
+    function sendScheduledNotif(type) {
+      const today = new Date().toDateString();
+      const record = getNotifRecord();
+      const key = today + '-' + type;
+      if (record[key]) return;
+
+      const body = buildNotifBody(type);
+      if (!body) return;
+
+      const title = type === 'midday' ? 'Midday Check-in' : 'End of Day Summary';
+
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: './icon-192.svg', tag: key });
+        record[key] = true;
+        localStorage.setItem(NOTIF_KEY, JSON.stringify(record));
+      }
+    }
+
+    function checkNotifSchedule() {
+      const now = new Date();
+      const h = now.getHours();
+      if (h >= MIDDAY_HOUR) sendScheduledNotif('midday');
+      if (h >= EVENING_HOUR) sendScheduledNotif('evening');
+    }
+
+    function initNotifications() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+      checkNotifSchedule();
+      setInterval(checkNotifSchedule, 60000);
     }
   </script>
 </body>
