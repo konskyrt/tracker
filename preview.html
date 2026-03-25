@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schedule Tracker</title>
+  <style>
+    :root{
+      --bg:#050816;
+      --panel:#0b1030;
+      --panel-2:#111846;
+      --panel-3:#0d1238;
+      --text:#eef3ff;
+      --muted:#9aa6cf;
+      --teal:#35e0c4;
+      --cyan:#58c8ff;
+      --purple:#7b5cff;
+      --pink:#ff5fb2;
+      --ring:#d8deec;
+      --line:#1d255b;
+      --ok:#49d39a;
+      --shadow:0 18px 40px rgba(0,0,0,.35);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:radial-gradient(circle at top left, #142063 0%, #070b22 35%, #040611 100%);
+    }
+    .wrap{max-width:1440px;margin:0 auto;padding:22px}
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;gap:16px;
+      margin-bottom:18px;
+    }
+    .brand{font-size:34px;font-weight:800;letter-spacing:-.03em}
+    .brand span{color:var(--teal)}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .control{
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;padding:10px 14px;color:var(--text);box-shadow:var(--shadow)
+    }
+    input, button, select{font:inherit}
+    input[type="date"], input[type="text"]{
+      background:transparent;border:none;color:var(--text);outline:none;min-width:120px
+    }
+    button{
+      background:linear-gradient(135deg, var(--purple), #3b68ff);
+      color:white;border:none;border-radius:14px;padding:11px 16px;cursor:pointer;
+      box-shadow:var(--shadow);font-weight:700;
+    }
+    button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+
+    .grid{display:grid;grid-template-columns:260px 1.2fr 1.1fr;gap:18px;margin-bottom:18px}
+    .panel{
+      background:linear-gradient(180deg, rgba(18,26,76,.96), rgba(8,11,34,.96));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);
+      position:relative;overflow:hidden;
+    }
+    .panel::after{
+      content:"";position:absolute;inset:auto -30% -45% auto;width:240px;height:240px;
+      background:radial-gradient(circle, rgba(88,200,255,.16), transparent 60%);
+      pointer-events:none;
+    }
+    .panel h3{margin:0 0 12px;font-size:15px;color:#dce4ff;font-weight:800;letter-spacing:.01em}
+    .muted{color:var(--muted)}
+
+    .week-date{
+      margin-top:8px;display:inline-flex;align-items:center;gap:8px;padding:12px 14px;
+      border-radius:14px;background:linear-gradient(135deg, rgba(53,224,196,.95), rgba(88,200,255,.9));
+      color:#042337;font-weight:800;
+    }
+    .mini-stats{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
+    .small-ring-wrap{display:flex;align-items:center;gap:16px}
+    .small-ring{
+      --p:0.63;
+      width:84px;height:84px;border-radius:50%;position:relative;
+      background:conic-gradient(var(--purple) calc(var(--p)*360deg), rgba(255,255,255,.1) 0);
+      display:grid;place-items:center;flex:0 0 auto;
+    }
+    .small-ring::before, .donut::before{
+      content:"";position:absolute;inset:12px;border-radius:50%;background:#0b1030;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+    }
+    .small-ring strong, .donut strong{position:relative;z-index:1;font-size:20px}
+
+    .progress-flex{display:flex;gap:18px;align-items:center}
+    .bars{flex:1}
+    .bar-grid{display:flex;gap:12px;align-items:flex-end;height:140px;padding:8px 2px 20px}
+    .daybar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .daybar .bar{
+      width:100%;max-width:34px;border-radius:12px 12px 4px 4px;
+      background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(208,216,235,.84));
+      position:relative;overflow:hidden;min-height:24px;
+    }
+    .daybar .fill{
+      position:absolute;left:0;right:0;bottom:0;
+      background:linear-gradient(180deg, var(--teal), #5a8cff);
+      border-radius:12px 12px 4px 4px;
+    }
+    .daybar label{font-size:12px;color:var(--muted)}
+    .donut{
+      --p:0.14;
+      width:150px;height:150px;border-radius:50%;position:relative;
+      background:conic-gradient(var(--teal) calc(var(--p)*360deg), rgba(255,255,255,.16) 0);
+      display:grid;place-items:center;flex:0 0 auto;
+    }
+    .donut strong{font-size:34px}
+
+    /* Goals panel */
+    .goals-section{margin-bottom:16px;position:relative;z-index:1}
+    .goals-section:last-child{margin-bottom:0}
+    .goals-section h4{
+      margin:0 0 8px;font-size:13px;color:var(--teal);font-weight:700;
+      text-transform:uppercase;letter-spacing:.05em;
+    }
+    .goal-list{display:grid;gap:6px}
+    .goal-row{
+      display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
+      background:rgba(255,255,255,.03);padding:8px 10px;border-radius:12px;
+    }
+    .goal-row input[type="checkbox"]{
+      appearance:none;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.6);
+      display:grid;place-items:center;background:transparent;cursor:pointer;
+    }
+    .goal-row input[type="checkbox"]:checked{
+      background:linear-gradient(135deg, var(--teal), var(--cyan));border-color:transparent;
+    }
+    .goal-row input[type="checkbox"]:checked::after{
+      content:"✓";font-size:12px;color:#041221;font-weight:900;
+    }
+    .goal-text{
+      width:100%;background:transparent;border:none;color:var(--text);outline:none;font-size:13px;
+    }
+    .remove-goal{
+      background:transparent;color:var(--muted);padding:0;border:none;box-shadow:none;
+      font-size:16px;line-height:1;cursor:pointer;
+    }
+    .add-goal{
+      margin-top:6px;font-size:12px;padding:6px 10px;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);
+    }
+
+    /* Day cards */
+    .days-scroll{overflow-x:auto;padding-bottom:8px}
+    .days{display:grid;grid-template-columns:repeat(7, minmax(195px,1fr));gap:16px}
+    .day-card{
+      background:linear-gradient(180deg, rgba(16,22,66,.96), rgba(7,10,29,.96));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:24px;padding:18px;box-shadow:var(--shadow);
+      min-height:485px;display:flex;flex-direction:column;gap:14px;
+    }
+    .day-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .day-title{font-size:18px;font-weight:800}
+    .date-label{font-size:12px;color:var(--muted);margin-top:4px}
+    .tiny-donut{
+      --p:0;
+      width:56px;height:56px;border-radius:50%;position:relative;
+      background:conic-gradient(var(--cyan) calc(var(--p)*360deg), rgba(255,255,255,.14) 0);
+      display:grid;place-items:center;flex:0 0 56px;
+    }
+    .tiny-donut::before{content:"";position:absolute;inset:8px;border-radius:50%;background:#0a0f31}
+    .tiny-donut strong{position:relative;z-index:1;font-size:14px}
+    .task-list{display:grid;gap:8px;align-content:start;min-height:250px}
+    .task-row{
+      display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
+      background:rgba(255,255,255,.03);padding:9px 10px;border-radius:14px;
+    }
+    .task-row input[type="checkbox"]{
+      appearance:none;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.6);
+      display:grid;place-items:center;background:transparent;cursor:pointer;
+    }
+    .task-row input[type="checkbox"]:checked{
+      background:linear-gradient(135deg, var(--teal), var(--cyan));border-color:transparent;
+    }
+    .task-row input[type="checkbox"]:checked::after{
+      content:"✓";font-size:12px;color:#041221;font-weight:900;
+    }
+    .task-text{
+      width:100%;background:transparent;border:none;color:var(--text);outline:none;font-size:14px;
+    }
+    .remove-task{
+      background:transparent;color:var(--muted);padding:0;border:none;box-shadow:none;
+      font-size:18px;line-height:1;cursor:pointer;
+    }
+    .day-actions{display:flex;justify-content:space-between;gap:8px;margin-top:auto}
+    .ghost{background:rgba(255,255,255,.06)}
+    .foot{margin-top:18px;padding:14px 0 6px;color:var(--muted);font-size:13px;text-align:center}
+    .count-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .pill{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px;color:#dce4ff}
+
+    @media (max-width: 1220px){
+      .grid{grid-template-columns:1fr}
+      .days{grid-template-columns:repeat(2, minmax(260px, 1fr))}
+    }
+    @media (max-width: 760px){
+      .topbar{align-items:flex-start;flex-direction:column}
+      .days{grid-template-columns:1fr}
+      .progress-flex{flex-direction:column;align-items:flex-start}
+      .brand{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="brand">Schedule <span>Tracker</span></div>
+        <div class="muted">A weekly dashboard to track your schedule and goals.</div>
+      </div>
+      <div class="controls">
+        <div class="control">
+          <label class="muted" for="weekStart">Week start</label><br>
+          <input type="date" id="weekStart">
+        </div>
+        <button id="resetWeek">Reset week</button>
+        <button class="secondary" id="loadDefaults">Load default tasks</button>
+      </div>
+    </div>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Task Tracker</h3>
+        <div class="muted">Current week</div>
+        <div class="week-date" id="weekRange">—</div>
+        <div class="mini-stats">
+          <div class="small-ring-wrap">
+            <div class="small-ring" id="miniRing" style="--p:0">
+              <strong id="miniPct">0%</strong>
+            </div>
+            <div>
+              <div style="font-weight:800;font-size:18px">Weekly focus</div>
+              <div class="muted">Your completion updates automatically.</div>
+              <div class="count-strip">
+                <div class="pill" id="completeCount">0 completed</div>
+                <div class="pill" id="remainingCount">0 remaining</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Overall Progress</h3>
+        <div class="progress-flex">
+          <div class="bars">
+            <div class="bar-grid" id="barGrid"></div>
+          </div>
+          <div class="donut" id="overallDonut" style="--p:0">
+            <strong id="overallPct">0%</strong>
+          </div>
+        </div>
+        <div class="muted" id="overallCaption" style="margin-top:10px">0 / 0 completed</div>
+      </div>
+
+      <div class="panel">
+        <h3>Greater Goals</h3>
+        <div class="goals-section">
+          <h4>Next Months</h4>
+          <div class="goal-list" id="monthlyGoals"></div>
+          <button class="ghost add-goal" data-type="monthly">+ Add goal</button>
+        </div>
+        <div class="goals-section">
+          <h4>Next Weeks</h4>
+          <div class="goal-list" id="weeklyGoals"></div>
+          <button class="ghost add-goal" data-type="weekly">+ Add goal</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="days-scroll">
+      <section class="days" id="daysGrid"></section>
+    </div>
+
+    <div class="foot">This dashboard saves in your browser automatically.</div>
+  </div>
+
+  <template id="taskRowTemplate">
+    <div class="task-row">
+      <input type="checkbox" class="task-check">
+      <input type="text" class="task-text" placeholder="Write a task">
+      <button class="remove-task" title="Remove task">×</button>
+    </div>
+  </template>
+
+  <script>
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const STORAGE_KEY = 'schedule-tracker-v2';
+
+    const generalTasks = [
+      'Review active projects',
+      'Learn topic (expert session)',
+      'Cadmium full 4D preparation',
+      'BIM2LOG app development',
+      'Gym workout',
+      'Personal project work',
+      'Master work'
+    ];
+
+    const daySpecificTasks = {
+      Monday: ['Life coach session', 'Outdoor activity'],
+      Friday: ['Financial planning']
+    };
+
+    const defaultTasks = {};
+    DAYS.forEach(day => {
+      defaultTasks[day] = [...generalTasks, ...(daySpecificTasks[day] || [])];
+    });
+
+    const defaultGoals = {
+      monthly: [
+        { text: '', done: false },
+        { text: '', done: false },
+        { text: '', done: false }
+      ],
+      weekly: [
+        { text: '', done: false },
+        { text: '', done: false },
+        { text: '', done: false }
+      ]
+    };
+
+    function startOfCurrentWeek() {
+      const d = new Date();
+      const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const dow = date.getDay();
+      const diff = dow === 0 ? 6 : dow - 1;
+      date.setDate(date.getDate() - diff);
+      return date;
+    }
+
+    function fmtDate(d) {
+      return String(d.getDate()).padStart(2,'0') + '.' +
+             String(d.getMonth()+1).padStart(2,'0') + '.' +
+             d.getFullYear();
+    }
+
+    function isoDate(d) {
+      return d.getFullYear() + '-' +
+             String(d.getMonth()+1).padStart(2,'0') + '-' +
+             String(d.getDate()).padStart(2,'0');
+    }
+
+    function addDays(d, n) {
+      const c = new Date(d);
+      c.setDate(c.getDate() + n);
+      return c;
+    }
+
+    function createEmptyState(weekStartIso) {
+      return {
+        weekStart: weekStartIso,
+        goals: JSON.parse(JSON.stringify(defaultGoals)),
+        days: DAYS.map(day => ({
+          day,
+          tasks: defaultTasks[day].map(text => ({ text, done: false }))
+        }))
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        if (saved && saved.weekStart && saved.days && saved.goals) return saved;
+      } catch(e) {}
+      return createEmptyState(isoDate(startOfCurrentWeek()));
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function resetWeek(weekStartIso) {
+      weekStartIso = weekStartIso || document.getElementById('weekStart').value || isoDate(startOfCurrentWeek());
+      state = createEmptyState(weekStartIso);
+      saveState();
+      render();
+    }
+
+    function ensureStateShape() {
+      if (!state.days || state.days.length !== 7) state.days = createEmptyState(state.weekStart).days;
+      if (!state.goals) state.goals = JSON.parse(JSON.stringify(defaultGoals));
+    }
+
+    function renderTopPanels() {
+      const weekStart = new Date(state.weekStart + 'T00:00:00');
+      const weekEnd = addDays(weekStart, 6);
+      document.getElementById('weekStart').value = state.weekStart;
+      document.getElementById('weekRange').textContent = fmtDate(weekStart) + '  →  ' + fmtDate(weekEnd);
+
+      const totals = state.days.map(d => ({
+        total: d.tasks.length,
+        done: d.tasks.filter(t => t.done).length
+      }));
+      const allTotal = totals.reduce((a,b) => a + b.total, 0);
+      const allDone  = totals.reduce((a,b) => a + b.done, 0);
+      const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
+
+      document.getElementById('overallPct').textContent = pct + '%';
+      document.getElementById('overallDonut').style.setProperty('--p', pct / 100);
+      document.getElementById('overallCaption').textContent = allDone + ' / ' + allTotal + ' completed';
+      document.getElementById('miniPct').textContent = pct + '%';
+      document.getElementById('miniRing').style.setProperty('--p', pct / 100);
+      document.getElementById('completeCount').textContent = allDone + ' completed';
+      document.getElementById('remainingCount').textContent = Math.max(allTotal - allDone, 0) + ' remaining';
+
+      const barGrid = document.getElementById('barGrid');
+      barGrid.innerHTML = '';
+      totals.forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'daybar';
+        const ratio = t.total ? (t.done / t.total) : 0;
+        div.innerHTML =
+          '<div class="bar"><div class="fill" style="height:' + Math.max(12, ratio * 100) + '%"></div></div>' +
+          '<label>' + SHORT[i] + '</label>';
+        barGrid.appendChild(div);
+      });
+    }
+
+    function renderGoals() {
+      ['monthly', 'weekly'].forEach(type => {
+        const id = type === 'monthly' ? 'monthlyGoals' : 'weeklyGoals';
+        const container = document.getElementById(id);
+        container.innerHTML = '';
+        state.goals[type].forEach((goal, i) => {
+          const row = document.createElement('div');
+          row.className = 'goal-row';
+          row.innerHTML =
+            '<input type="checkbox" class="goal-check">' +
+            '<input type="text" class="goal-text" placeholder="Enter a goal…">' +
+            '<button class="remove-goal" title="Remove">×</button>';
+          const check  = row.querySelector('.goal-check');
+          const text   = row.querySelector('.goal-text');
+          const remove = row.querySelector('.remove-goal');
+          check.checked = goal.done;
+          text.value = goal.text;
+          check.addEventListener('change', () => {
+            state.goals[type][i].done = check.checked;
+            saveState();
+          });
+          text.addEventListener('input', () => {
+            state.goals[type][i].text = text.value;
+            saveState();
+          });
+          remove.addEventListener('click', () => {
+            state.goals[type].splice(i, 1);
+            saveState();
+            renderGoals();
+          });
+          container.appendChild(row);
+        });
+      });
+
+      document.querySelectorAll('.add-goal').forEach(btn => {
+        btn.onclick = () => {
+          state.goals[btn.dataset.type].push({ text: '', done: false });
+          saveState();
+          renderGoals();
+        };
+      });
+    }
+
+    function renderDays() {
+      const daysGrid = document.getElementById('daysGrid');
+      daysGrid.innerHTML = '';
+      const template = document.getElementById('taskRowTemplate');
+      const weekStart = new Date(state.weekStart + 'T00:00:00');
+
+      state.days.forEach((dayData, index) => {
+        const card = document.createElement('article');
+        card.className = 'day-card';
+        const date = addDays(weekStart, index);
+        const total = dayData.tasks.length;
+        const done = dayData.tasks.filter(t => t.done).length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+
+        card.innerHTML =
+          '<div class="day-top">' +
+            '<div>' +
+              '<div class="day-title">' + dayData.day + '</div>' +
+              '<div class="date-label">' + fmtDate(date) + '</div>' +
+            '</div>' +
+            '<div class="tiny-donut" style="--p:' + (pct/100) + '"><strong>' + pct + '%</strong></div>' +
+          '</div>' +
+          '<div class="muted" style="font-size:13px">Tasks</div>' +
+          '<div class="task-list"></div>' +
+          '<div class="day-actions">' +
+            '<button class="ghost add-task">+ Add task</button>' +
+            '<button class="secondary clear-day">Clear</button>' +
+          '</div>';
+
+        const list = card.querySelector('.task-list');
+        dayData.tasks.forEach((task, ti) => {
+          const node = template.content.firstElementChild.cloneNode(true);
+          const check  = node.querySelector('.task-check');
+          const text   = node.querySelector('.task-text');
+          const remove = node.querySelector('.remove-task');
+          check.checked = task.done;
+          text.value = task.text;
+          check.addEventListener('change', () => {
+            state.days[index].tasks[ti].done = check.checked;
+            saveState();
+            render();
+          });
+          text.addEventListener('input', () => {
+            state.days[index].tasks[ti].text = text.value;
+            saveState();
+          });
+          remove.addEventListener('click', () => {
+            state.days[index].tasks.splice(ti, 1);
+            saveState();
+            render();
+          });
+          list.appendChild(node);
+        });
+
+        card.querySelector('.add-task').addEventListener('click', () => {
+          state.days[index].tasks.push({ text: 'New task', done: false });
+          saveState();
+          render();
+        });
+        card.querySelector('.clear-day').addEventListener('click', () => {
+          state.days[index].tasks.forEach(t => t.done = false);
+          saveState();
+          render();
+        });
+
+        daysGrid.appendChild(card);
+      });
+    }
+
+    function render() {
+      ensureStateShape();
+      renderTopPanels();
+      renderGoals();
+      renderDays();
+    }
+
+    document.getElementById('weekStart').addEventListener('change', e => resetWeek(e.target.value));
+    document.getElementById('resetWeek').addEventListener('click', () => {
+      if (confirm('Reset the whole week and clear all checkboxes?')) resetWeek();
+    });
+    document.getElementById('loadDefaults').addEventListener('click', () => {
+      state.days = createEmptyState(state.weekStart).days;
+      saveState();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
