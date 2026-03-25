@@ -211,9 +211,39 @@
       .progress-flex{flex-direction:column;align-items:flex-start}
       .brand{font-size:28px}
     }
+
+    /* Auth gate */
+    .locked .wrap{display:none}
+    .auth-gate{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      flex-direction:column;gap:18px;padding:24px;
+    }
+    .auth-gate.hidden{display:none}
+    .auth-gate h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+    .auth-gate h1 span{color:var(--teal)}
+    .auth-input{
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;padding:14px 18px;color:var(--text);font-size:16px;
+      width:100%;max-width:320px;outline:none;text-align:center;
+    }
+    .auth-input:focus{border-color:var(--teal)}
+    .auth-btn{
+      background:linear-gradient(135deg, var(--purple), #3b68ff);
+      color:white;border:none;border-radius:14px;padding:13px 32px;cursor:pointer;
+      box-shadow:var(--shadow);font-weight:700;font-size:16px;
+    }
+    .auth-error{color:var(--pink);font-size:14px;min-height:20px}
   </style>
 </head>
-<body>
+<body class="locked">
+  <div class="auth-gate" id="authGate">
+    <h1>Schedule <span>Tracker</span></h1>
+    <div class="muted">Enter your password to continue</div>
+    <input type="password" class="auth-input" id="authInput" placeholder="Password" autofocus />
+    <button class="auth-btn" id="authBtn">Unlock</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+
   <div class="wrap">
     <div class="topbar">
       <div>
@@ -564,7 +594,44 @@
       render();
     });
 
-    render();
+    // --- Auth gate ---
+    const AUTH_KEY = 'schedule-tracker-auth';
+    // SHA-256 hash of the password — change by running:
+    //   crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOUR_PASSWORD'))
+    const PASS_HASH = '74769fa49d40c7fb1367346981bf7bd927bf15c0ccfe323aa3ee7993692f857b';
+
+    async function sha256(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function unlock() {
+      document.body.classList.remove('locked');
+      document.getElementById('authGate').classList.add('hidden');
+      render();
+    }
+
+    if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+      unlock();
+    }
+
+    document.getElementById('authBtn').addEventListener('click', tryAuth);
+    document.getElementById('authInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryAuth();
+    });
+
+    async function tryAuth() {
+      const input = document.getElementById('authInput');
+      const hash = await sha256(input.value);
+      if (hash === PASS_HASH) {
+        sessionStorage.setItem(AUTH_KEY, 'true');
+        unlock();
+      } else {
+        document.getElementById('authError').textContent = 'Wrong password';
+        input.value = '';
+        input.focus();
+      }
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
