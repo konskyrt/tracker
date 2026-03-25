@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050816" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tracker" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
   <title>Schedule Tracker</title>
   <style>
     :root{
@@ -145,12 +152,13 @@
 
     /* Day cards */
     .days-scroll{overflow-x:auto;padding-bottom:8px}
-    .days{display:grid;grid-template-columns:repeat(7, minmax(195px,1fr));gap:16px}
+    .days{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px,1fr));gap:16px}
     .day-card{
       background:linear-gradient(180deg, rgba(16,22,66,.96), rgba(7,10,29,.96));
       border:1px solid rgba(255,255,255,.06);
       border-radius:24px;padding:18px;box-shadow:var(--shadow);
       min-height:485px;display:flex;flex-direction:column;gap:14px;
+      min-width:0;overflow:hidden;
     }
     .day-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
     .day-title{font-size:18px;font-weight:800}
@@ -163,10 +171,11 @@
     }
     .tiny-donut::before{content:"";position:absolute;inset:8px;border-radius:50%;background:#0a0f31}
     .tiny-donut strong{position:relative;z-index:1;font-size:14px}
-    .task-list{display:grid;gap:8px;align-content:start;min-height:250px}
+    .task-list{display:grid;gap:8px;align-content:start;min-width:0;max-height:400px;overflow-y:auto}
     .task-row{
       display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
       background:rgba(255,255,255,.03);padding:9px 10px;border-radius:14px;
+      min-width:0;
     }
     .task-row input[type="checkbox"]{
       appearance:none;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.6);
@@ -179,7 +188,8 @@
       content:"✓";font-size:12px;color:#041221;font-weight:900;
     }
     .task-text{
-      width:100%;background:transparent;border:none;color:var(--text);outline:none;font-size:14px;
+      width:100%;min-width:0;background:transparent;border:none;color:var(--text);outline:none;font-size:14px;
+      text-overflow:ellipsis;overflow:hidden;
     }
     .remove-task{
       background:transparent;color:var(--muted);padding:0;border:none;box-shadow:none;
@@ -193,7 +203,7 @@
 
     @media (max-width: 1220px){
       .grid{grid-template-columns:1fr}
-      .days{grid-template-columns:repeat(2, minmax(260px, 1fr))}
+      .days{grid-template-columns:repeat(auto-fill, minmax(280px, 1fr))}
     }
     @media (max-width: 760px){
       .topbar{align-items:flex-start;flex-direction:column}
@@ -288,7 +298,7 @@
   <script>
     const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     const SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const STORAGE_KEY = 'schedule-tracker-v2';
+    const STORAGE_KEY = 'schedule-tracker-v4';
 
     const generalTasks = [
       'Review active projects',
@@ -297,12 +307,15 @@
       'BIM2LOG app development',
       'Gym workout',
       'Personal project work',
-      'Master work'
+      'Master work',
+      'Social activity',
+      'Hobby'
     ];
 
     const daySpecificTasks = {
       Monday: ['Life coach session', 'Outdoor activity'],
-      Friday: ['Financial planning']
+      Friday: ['Financial planning'],
+      Sunday: ['Meal prepping']
     };
 
     const defaultTasks = {};
@@ -552,6 +565,10 @@
     });
 
     render();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
   </script>
 </body>
 </html>
