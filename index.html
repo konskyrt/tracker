@@ -698,11 +698,35 @@
       }
     }
 
+    function sendCalendarNotif() {
+      const now = new Date();
+      const dow = now.getDay();
+      if (dow !== 0) return;
+      const h = now.getHours();
+      if (h < 19) return;
+
+      const today = now.toDateString();
+      const record = getNotifRecord();
+      const key = today + '-calendar';
+      if (record[key]) return;
+
+      if (Notification.permission === 'granted') {
+        new Notification('Calendar Updated', {
+          body: 'Next week\'s tasks have been pushed to your Outlook calendar.',
+          icon: './icon-192.svg',
+          tag: key
+        });
+        record[key] = true;
+        localStorage.setItem(NOTIF_KEY, JSON.stringify(record));
+      }
+    }
+
     function checkNotifSchedule() {
       const now = new Date();
       const h = now.getHours();
       if (h >= MIDDAY_HOUR) sendScheduledNotif('midday');
       if (h >= EVENING_HOUR) sendScheduledNotif('evening');
+      sendCalendarNotif();
     }
 
     function initNotifications() {

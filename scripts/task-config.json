@@ -1,0 +1,28 @@
+{
+  "dayStartTime": "06:30",
+  "timezone": "Europe/Zurich",
+  "generalTasks": [
+    { "name": "Review active projects", "duration": 30 },
+    { "name": "Learn topic (expert session)", "duration": 60 },
+    { "name": "Cadmium full 4D preparation", "duration": 90 },
+    { "name": "BIM2LOG app development", "duration": 120 },
+    { "name": "Gym workout", "duration": 60 },
+    { "name": "Personal project work", "duration": 90 },
+    { "name": "Master work", "duration": 120 },
+    { "name": "Social activity", "duration": 60 },
+    { "name": "Hobby", "duration": 60 }
+  ],
+  "daySpecificTasks": {
+    "Monday": [
+      { "name": "Life coach session", "duration": 60 },
+      { "name": "Outdoor activity", "duration": 60 }
+    ],
+    "Friday": [
+      { "name": "Financial planning", "duration": 30 }
+    ],
+    "Sunday": [
+      { "name": "Meal prepping", "duration": 90 }
+    ]
+  },
+  "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+}
