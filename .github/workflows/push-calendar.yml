@@ -1,12 +1,15 @@
-name: Push Tasks to Outlook Calendar
+name: Update Schedule Calendar
 
 on:
   schedule:
     - cron: '0 18 * * 0'  # Sunday 6 PM UTC (~7 PM CET / 8 PM CEST)
   workflow_dispatch:       # Allow manual trigger for testing
 
+permissions:
+  contents: write
+
 jobs:
-  push-calendar:
+  generate-ics:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -17,9 +20,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Push tasks to Outlook calendar
-        env:
-          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-          MS_REFRESH_TOKEN: ${{ secrets.MS_REFRESH_TOKEN }}
+      - name: Generate schedule.ics
         run: node scripts/push-to-calendar.js
+
+      - name: Commit and push updated calendar
+        run: |
+          git config user.name "konskyrt"
+          git config user.email "kyrkost@outlook.com"
+          git add schedule.ics
+          git diff --cached --quiet || git commit -m "Update schedule.ics for next week"
+          git push
