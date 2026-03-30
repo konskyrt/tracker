@@ -405,14 +405,23 @@
     }
 
     function loadState() {
+      const currentWeekIso = isoDate(startOfCurrentWeek());
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-        if (saved && saved.weekStart && saved.days && saved.goals) return saved;
+        if (saved && saved.weekStart && saved.days && saved.goals) {
+          if (saved.weekStart < currentWeekIso) {
+            const fresh = createEmptyState(currentWeekIso);
+            fresh.goals = saved.goals;
+            return fresh;
+          }
+          return saved;
+        }
       } catch(e) {}
-      return createEmptyState(isoDate(startOfCurrentWeek()));
+      return createEmptyState(currentWeekIso);
     }
 
     let state = loadState();
+    saveState();
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
