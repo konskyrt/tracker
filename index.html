@@ -173,10 +173,17 @@
     .tiny-donut strong{position:relative;z-index:1;font-size:14px}
     .task-list{display:grid;gap:8px;align-content:start;min-width:0;max-height:400px;overflow-y:auto}
     .task-row{
-      display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
+      display:grid;grid-template-columns:22px 1fr auto auto;gap:6px;align-items:center;
       background:rgba(255,255,255,.03);padding:9px 10px;border-radius:14px;
       min-width:0;
     }
+    .task-arrows{display:flex;flex-direction:column;gap:2px}
+    .task-arrows button{
+      background:transparent;color:var(--muted);border:none;box-shadow:none;
+      padding:0;font-size:12px;line-height:1;cursor:pointer;width:18px;height:14px;
+      display:grid;place-items:center;border-radius:4px;
+    }
+    .task-arrows button:hover{background:rgba(255,255,255,.1);color:var(--text)}
     .task-row input[type="checkbox"]{
       appearance:none;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.6);
       display:grid;place-items:center;background:transparent;cursor:pointer;
@@ -321,6 +328,10 @@
     <div class="task-row">
       <input type="checkbox" class="task-check">
       <input type="text" class="task-text" placeholder="Write a task">
+      <div class="task-arrows">
+        <button class="move-up" title="Move up">▲</button>
+        <button class="move-down" title="Move down">▼</button>
+      </div>
       <button class="remove-task" title="Remove task">×</button>
     </div>
   </template>
@@ -552,8 +563,24 @@
           const check  = node.querySelector('.task-check');
           const text   = node.querySelector('.task-text');
           const remove = node.querySelector('.remove-task');
+          const moveUp = node.querySelector('.move-up');
+          const moveDown = node.querySelector('.move-down');
           check.checked = task.done;
           text.value = task.text;
+          moveUp.addEventListener('click', () => {
+            if (ti === 0) return;
+            const tasks = state.days[index].tasks;
+            [tasks[ti - 1], tasks[ti]] = [tasks[ti], tasks[ti - 1]];
+            saveState();
+            render();
+          });
+          moveDown.addEventListener('click', () => {
+            const tasks = state.days[index].tasks;
+            if (ti >= tasks.length - 1) return;
+            [tasks[ti], tasks[ti + 1]] = [tasks[ti + 1], tasks[ti]];
+            saveState();
+            render();
+          });
           check.addEventListener('change', () => {
             state.days[index].tasks[ti].done = check.checked;
             saveState();
