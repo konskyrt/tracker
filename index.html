@@ -58,6 +58,31 @@
       box-shadow:var(--shadow);font-weight:700;
     }
     button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+    button.save-btn{
+      background:linear-gradient(135deg, var(--teal), #2bc4a8);color:#042337;
+      font-weight:800;position:relative;
+    }
+    button.save-btn.syncing{opacity:.7;pointer-events:none}
+    button.save-btn.saved{background:linear-gradient(135deg, var(--ok), #35c07a)}
+    button.save-btn.dirty{animation:pulse-save 1.5s infinite}
+    @keyframes pulse-save{0%,100%{box-shadow:0 0 0 0 rgba(53,224,196,.4)}50%{box-shadow:0 0 0 10px rgba(53,224,196,0)}}
+    .sync-status{font-size:12px;color:var(--muted);margin-top:4px;text-align:center}
+    .token-prompt{
+      position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+      display:flex;align-items:center;justify-content:center;padding:24px;
+    }
+    .token-prompt.hidden{display:none}
+    .token-box{
+      background:var(--panel);border:1px solid rgba(255,255,255,.1);
+      border-radius:var(--radius);padding:24px;max-width:480px;width:100%;
+    }
+    .token-box h3{margin:0 0 8px;color:var(--teal)}
+    .token-box p{color:var(--muted);font-size:14px;margin:0 0 16px;line-height:1.5}
+    .token-box input{
+      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);color:var(--text);font-size:14px;margin-bottom:12px;
+    }
+    .token-box .btn-row{display:flex;gap:10px}
 
     .grid{display:grid;grid-template-columns:260px 1.2fr 1.1fr;gap:18px;margin-bottom:18px}
     .panel{
@@ -251,6 +276,19 @@
     <div class="auth-error" id="authError"></div>
   </div>
 
+  <div class="token-prompt hidden" id="tokenPrompt">
+    <div class="token-box">
+      <h3>GitHub Sync Setup</h3>
+      <p>To sync tasks across devices, enter a GitHub Personal Access Token with <strong>repo</strong> scope. 
+         Create one at <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--teal)">github.com/settings/tokens</a> (select "repo" scope).</p>
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" />
+      <div class="btn-row">
+        <button id="tokenSave">Save Token</button>
+        <button class="secondary" id="tokenSkip">Skip</button>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="topbar">
       <div>
@@ -264,6 +302,7 @@
         </div>
         <button id="resetWeek">Reset week</button>
         <button class="secondary" id="loadDefaults">Load default tasks</button>
+        <button class="save-btn" id="saveToCloud">Save & Sync</button>
       </div>
     </div>
 
@@ -433,6 +472,97 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const btn = document.getElementById('saveToCloud');
+      if (btn && !btn.classList.contains('syncing')) {
+        btn.classList.add('dirty');
+        btn.classList.remove('saved');
+        btn.textContent = 'Save & Sync';
+      }
+    }
+
+    // --- GitHub Sync ---
+    const GH_TOKEN_KEY = 'schedule-tracker-gh-token';
+    const GH_REPO = 'konskyrt/tracker';
+    const GH_FILE = 'state.json';
+    const GH_API = 'https://api.github.com';
+
+    function getToken() { return localStorage.getItem(GH_TOKEN_KEY); }
+
+    async function fetchRemoteState() {
+      const token = getToken();
+      if (!token) return null;
+      try {
+        const res = await fetch(`${GH_API}/repos/${GH_REPO}/contents/${GH_FILE}`, {
+          headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const content = JSON.parse(atob(data.content));
+        return { content, sha: data.sha };
+      } catch(e) { return null; }
+    }
+
+    async function pushRemoteState() {
+      const token = getToken();
+      if (!token) {
+        document.getElementById('tokenPrompt').classList.remove('hidden');
+        return;
+      }
+      const btn = document.getElementById('saveToCloud');
+      btn.classList.add('syncing');
+      btn.classList.remove('dirty', 'saved');
+      btn.textContent = 'Syncing...';
+
+      try {
+        const existing = await fetchRemoteState();
+        const body = {
+          message: 'Sync state from Schedule Tracker',
+          content: btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2)))),
+          committer: { name: 'konskyrt', email: 'kyrkost@outlook.com' }
+        };
+        if (existing) body.sha = existing.sha;
+
+        const res = await fetch(`${GH_API}/repos/${GH_REPO}/contents/${GH_FILE}`, {
+          method: 'PUT',
+          headers: {
+            Authorization: 'token ' + token,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          btn.classList.remove('syncing');
+          btn.classList.add('saved');
+          btn.textContent = 'Synced ✓';
+          setTimeout(() => { btn.textContent = 'Save & Sync'; btn.classList.remove('saved'); }, 3000);
+        } else {
+          const err = await res.json();
+          throw new Error(err.message);
+        }
+      } catch(e) {
+        btn.classList.remove('syncing');
+        btn.classList.add('dirty');
+        btn.textContent = 'Sync failed — retry';
+        console.error('Sync error:', e);
+      }
+    }
+
+    async function pullRemoteState() {
+      const remote = await fetchRemoteState();
+      if (remote && remote.content && remote.content.weekStart) {
+        const currentWeekIso = isoDate(startOfCurrentWeek());
+        if (remote.content.weekStart < currentWeekIso) {
+          const fresh = createEmptyState(currentWeekIso);
+          fresh.goals = remote.content.goals || fresh.goals;
+          state = fresh;
+        } else {
+          state = remote.content;
+        }
+        saveState();
+        render();
+      }
     }
 
     function resetWeek(weekStartIso) {
@@ -686,6 +816,22 @@
       render();
     });
 
+    // --- Save & Sync button ---
+    document.getElementById('saveToCloud').addEventListener('click', () => pushRemoteState());
+
+    // --- Token prompt handlers ---
+    document.getElementById('tokenSave').addEventListener('click', () => {
+      const val = document.getElementById('tokenInput').value.trim();
+      if (val) {
+        localStorage.setItem(GH_TOKEN_KEY, val);
+        document.getElementById('tokenPrompt').classList.add('hidden');
+        pushRemoteState();
+      }
+    });
+    document.getElementById('tokenSkip').addEventListener('click', () => {
+      document.getElementById('tokenPrompt').classList.add('hidden');
+    });
+
     // --- Auth gate ---
     const AUTH_KEY = 'schedule-tracker-auth';
     // SHA-256 hash of the password — change by running:
@@ -702,6 +848,7 @@
       document.getElementById('authGate').classList.add('hidden');
       render();
       initNotifications();
+      if (getToken()) pullRemoteState();
     }
 
     if (sessionStorage.getItem(AUTH_KEY) === 'true') {
