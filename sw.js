@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-tracker-v5';
+const CACHE_NAME = 'schedule-tracker-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -24,11 +24,17 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = event.request.url;
+  if (url.includes('mantledb.sh') || url.includes('jsonblob.com') || event.request.method !== 'GET') {
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))

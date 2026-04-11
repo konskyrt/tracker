@@ -451,8 +451,8 @@
       }
     }
 
-    // --- Cloud Sync (jsonblob.com — zero auth) ---
-    const BLOB_URL = 'https://jsonblob.com/api/jsonBlob/019d7c08-6287-7984-8dfc-d48c3eb651be';
+    // --- Cloud Sync (MantleDB — zero auth, CORS enabled) ---
+    const SYNC_URL = 'https://mantledb.sh/v2/schedule-tracker-konskyrt/state';
 
     async function pushRemoteState() {
       const btn = document.getElementById('saveToCloud');
@@ -461,9 +461,9 @@
       btn.textContent = 'Syncing...';
 
       try {
-        const res = await fetch(BLOB_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        const res = await fetch(SYNC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(state)
         });
 
@@ -485,10 +485,7 @@
 
     async function pullRemoteState() {
       try {
-        const res = await fetch(BLOB_URL, {
-          headers: { Accept: 'application/json' },
-          cache: 'no-store'
-        });
+        const res = await fetch(SYNC_URL, { cache: 'no-store' });
         if (!res.ok) return;
         const remote = await res.json();
         if (remote && remote.weekStart && remote.days) {
@@ -763,51 +760,6 @@
     // --- Save & Sync button ---
     document.getElementById('saveToCloud').addEventListener('click', () => pushRemoteState());
 
-    // --- Auth gate ---
-    const AUTH_KEY = 'schedule-tracker-auth';
-    // SHA-256 hash of the password — change by running:
-    //   crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOUR_PASSWORD'))
-    const PASS_HASH = '74769fa49d40c7fb1367346981bf7bd927bf15c0ccfe323aa3ee7993692f857b';
-
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-
-    function unlock() {
-      document.body.classList.remove('locked');
-      document.getElementById('authGate').classList.add('hidden');
-      render();
-      initNotifications();
-      pullRemoteState();
-    }
-
-    if (sessionStorage.getItem(AUTH_KEY) === 'true') {
-      unlock();
-    }
-
-    document.getElementById('authBtn').addEventListener('click', tryAuth);
-    document.getElementById('authInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') tryAuth();
-    });
-
-    async function tryAuth() {
-      const input = document.getElementById('authInput');
-      const hash = await sha256(input.value);
-      if (hash === PASS_HASH) {
-        sessionStorage.setItem(AUTH_KEY, 'true');
-        unlock();
-      } else {
-        document.getElementById('authError').textContent = 'Wrong password';
-        input.value = '';
-        input.focus();
-      }
-    }
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
-    }
-
     // --- Scheduled notifications ---
     const NOTIF_KEY = 'schedule-tracker-notif';
     const MIDDAY_HOUR = 13;
@@ -897,6 +849,49 @@
       }
       checkNotifSchedule();
       setInterval(checkNotifSchedule, 60000);
+    }
+
+    // --- Auth gate ---
+    const AUTH_KEY = 'schedule-tracker-auth';
+    const PASS_HASH = '74769fa49d40c7fb1367346981bf7bd927bf15c0ccfe323aa3ee7993692f857b';
+
+    async function sha256(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function unlock() {
+      document.body.classList.remove('locked');
+      document.getElementById('authGate').classList.add('hidden');
+      render();
+      initNotifications();
+      pullRemoteState();
+    }
+
+    if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+      unlock();
+    }
+
+    document.getElementById('authBtn').addEventListener('click', tryAuth);
+    document.getElementById('authInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryAuth();
+    });
+
+    async function tryAuth() {
+      const input = document.getElementById('authInput');
+      const hash = await sha256(input.value);
+      if (hash === PASS_HASH) {
+        sessionStorage.setItem(AUTH_KEY, 'true');
+        unlock();
+      } else {
+        document.getElementById('authError').textContent = 'Wrong password';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
     }
   </script>
 </body>
