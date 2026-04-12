@@ -134,10 +134,13 @@
     }
     .goal-list{display:grid;gap:6px}
     .goal-row{
-      display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
+      display:grid;grid-template-columns:auto 22px 1fr auto;gap:10px;align-items:center;
       background:rgba(255,255,255,.03);padding:8px 10px;border-radius:12px;
+      transition:opacity .15s;
     }
-    .goal-row.has-date{grid-template-columns:22px 1fr auto auto}
+    .goal-row.has-date{grid-template-columns:auto 22px 1fr auto auto}
+    .goal-row.dragging{opacity:.4}
+    .goal-row.drag-over{border-top:2px solid var(--teal);margin-top:-2px}
     .goal-date{
       background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:8px;
       color:var(--teal);font-size:11px;padding:4px 6px;outline:none;
@@ -566,10 +569,15 @@
         const isMonthly = type === 'monthly';
         const container = document.getElementById(id);
         container.innerHTML = '';
+        let dragSrcIdx = null;
+
         state.goals[type].forEach((goal, i) => {
           const row = document.createElement('div');
           row.className = 'goal-row' + (isMonthly ? ' has-date' : '');
+          row.draggable = true;
+          row.dataset.gi = i;
           let html =
+            '<span class="drag-handle">⠿</span>' +
             '<input type="checkbox" class="goal-check">' +
             '<input type="text" class="goal-text" placeholder="Enter a goal…">';
           if (isMonthly) html += '<input type="date" class="goal-date" title="Target date">';
@@ -578,6 +586,7 @@
           const check  = row.querySelector('.goal-check');
           const text   = row.querySelector('.goal-text');
           const remove = row.querySelector('.remove-goal');
+          const handle = row.querySelector('.drag-handle');
           check.checked = goal.done;
           text.value = goal.text;
           check.addEventListener('change', () => {
@@ -601,6 +610,68 @@
             saveState();
             renderGoals();
           });
+
+          row.addEventListener('dragstart', e => {
+            dragSrcIdx = i;
+            row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+          });
+          row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            container.querySelectorAll('.goal-row').forEach(r => r.classList.remove('drag-over'));
+          });
+          row.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            container.querySelectorAll('.goal-row').forEach(r => r.classList.remove('drag-over'));
+            if (Number(row.dataset.gi) !== dragSrcIdx) row.classList.add('drag-over');
+          });
+          row.addEventListener('drop', e => {
+            e.preventDefault();
+            const target = Number(row.dataset.gi);
+            if (dragSrcIdx !== null && dragSrcIdx !== target) {
+              const [moved] = state.goals[type].splice(dragSrcIdx, 1);
+              state.goals[type].splice(target, 0, moved);
+              saveState();
+              renderGoals();
+            }
+          });
+
+          let touchClone = null, touchTarget = null;
+          handle.addEventListener('touchstart', e => {
+            dragSrcIdx = i;
+            touchClone = row.cloneNode(true);
+            touchClone.style.cssText = 'position:fixed;pointer-events:none;opacity:.7;z-index:9999;width:' + row.offsetWidth + 'px';
+            document.body.appendChild(touchClone);
+            row.classList.add('dragging');
+            e.preventDefault();
+          }, { passive: false });
+          handle.addEventListener('touchmove', e => {
+            const t = e.touches[0];
+            if (touchClone) { touchClone.style.left = t.clientX + 'px'; touchClone.style.top = t.clientY + 'px'; }
+            container.querySelectorAll('.goal-row').forEach(r => {
+              r.classList.remove('drag-over');
+              const rect = r.getBoundingClientRect();
+              if (t.clientY >= rect.top && t.clientY <= rect.bottom) {
+                touchTarget = Number(r.dataset.gi);
+                if (touchTarget !== dragSrcIdx) r.classList.add('drag-over');
+              }
+            });
+            e.preventDefault();
+          }, { passive: false });
+          handle.addEventListener('touchend', () => {
+            if (touchClone) { touchClone.remove(); touchClone = null; }
+            row.classList.remove('dragging');
+            container.querySelectorAll('.goal-row').forEach(r => r.classList.remove('drag-over'));
+            if (dragSrcIdx !== null && touchTarget !== null && dragSrcIdx !== touchTarget) {
+              const [moved] = state.goals[type].splice(dragSrcIdx, 1);
+              state.goals[type].splice(touchTarget, 0, moved);
+              saveState();
+              renderGoals();
+            }
+            dragSrcIdx = null; touchTarget = null;
+          });
+
           container.appendChild(row);
         });
       });
