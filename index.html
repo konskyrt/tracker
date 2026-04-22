@@ -67,6 +67,13 @@
     button.save-btn.dirty{animation:pulse-save 1.5s infinite}
     @keyframes pulse-save{0%,100%{box-shadow:0 0 0 0 rgba(53,224,196,.4)}50%{box-shadow:0 0 0 10px rgba(53,224,196,0)}}
     .sync-status{font-size:12px;color:var(--muted);margin-top:4px;text-align:center}
+    button.push-cal-btn{
+      background:linear-gradient(135deg, #ff8a3d, var(--pink));color:white;
+      font-weight:800;position:relative;
+    }
+    button.push-cal-btn.syncing{opacity:.7;pointer-events:none}
+    button.push-cal-btn.saved{background:linear-gradient(135deg, var(--ok), #35c07a)}
+    button.push-cal-btn.failed{background:linear-gradient(135deg, var(--pink), #b93a7a)}
 
     .grid{display:grid;grid-template-columns:260px 1.2fr 1.1fr;gap:18px;margin-bottom:18px}
     .panel{
@@ -284,6 +291,7 @@
         <button id="resetWeek">Reset week</button>
         <button class="secondary" id="loadDefaults">Load default tasks</button>
         <button class="save-btn" id="saveToCloud">Save & Sync</button>
+        <button class="push-cal-btn" id="pushToCalendar" title="Regenerate schedule.ics and push to your Outlook-subscribed calendar. Shift-click to reset the saved token.">Push to Calendar</button>
       </div>
     </div>
 
@@ -850,6 +858,110 @@
 
     // --- Save & Sync button ---
     document.getElementById('saveToCloud').addEventListener('click', () => pushRemoteState());
+
+    // --- Push to Calendar (triggers GitHub Actions workflow_dispatch) ---
+    // The same workflow also runs automatically every Sunday 18:00 UTC.
+    const GH_CONFIG = {
+      owner: 'konskyrt',
+      repo: 'tracker',
+      workflow: 'push-calendar.yml',
+      ref: 'main'
+    };
+    const GH_PAT_KEY = 'schedule-tracker-gh-pat';
+
+    function getStoredPat() {
+      return localStorage.getItem(GH_PAT_KEY) || '';
+    }
+
+    function promptForPat() {
+      const msg =
+        'Paste a GitHub fine-grained personal access token.\n\n' +
+        'It must be scoped to the repo "konskyrt/tracker" with:\n' +
+        '  • Actions: Read and write\n' +
+        '  • Contents: Read-only (or Read and write)\n\n' +
+        'Create one at: https://github.com/settings/personal-access-tokens\n' +
+        'The token is stored only in this browser (localStorage).';
+      const pat = prompt(msg, '');
+      if (!pat) return '';
+      const trimmed = pat.trim();
+      localStorage.setItem(GH_PAT_KEY, trimmed);
+      return trimmed;
+    }
+
+    async function dispatchCalendarWorkflow() {
+      const btn = document.getElementById('pushToCalendar');
+
+      if (btn.classList.contains('syncing')) return;
+
+      let pat = getStoredPat();
+      if (!pat) {
+        pat = promptForPat();
+        if (!pat) return;
+      }
+
+      btn.classList.remove('saved', 'failed');
+      btn.classList.add('syncing');
+      btn.textContent = 'Pushing…';
+
+      const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/actions/workflows/${GH_CONFIG.workflow}/dispatches`;
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': 'Bearer ' + pat,
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ref: GH_CONFIG.ref })
+        });
+
+        btn.classList.remove('syncing');
+
+        if (res.status === 204) {
+          btn.classList.add('saved');
+          btn.textContent = 'Pushed ✓ — check Actions';
+          setTimeout(() => {
+            btn.classList.remove('saved');
+            btn.textContent = 'Push to Calendar';
+          }, 5000);
+          return;
+        }
+
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem(GH_PAT_KEY);
+          btn.classList.add('failed');
+          btn.textContent = 'Auth failed — click to retry';
+          const body = await res.text().catch(() => '');
+          console.error('GitHub auth failed (' + res.status + '):', body);
+          alert('GitHub rejected the token (' + res.status + '). It has been cleared — click the button again to paste a new one.');
+          return;
+        }
+
+        const body = await res.text().catch(() => '');
+        btn.classList.add('failed');
+        btn.textContent = 'Push failed — retry';
+        console.error('Workflow dispatch failed:', res.status, body);
+        alert('Workflow dispatch failed (HTTP ' + res.status + '). See console for details.');
+      } catch (err) {
+        btn.classList.remove('syncing');
+        btn.classList.add('failed');
+        btn.textContent = 'Network error — retry';
+        console.error('Push to Calendar network error:', err);
+      }
+    }
+
+    document.getElementById('pushToCalendar').addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        if (confirm('Clear the saved GitHub token from this browser?')) {
+          localStorage.removeItem(GH_PAT_KEY);
+          alert('Token cleared. Next click will ask for a new one.');
+        }
+        return;
+      }
+      dispatchCalendarWorkflow();
+    });
 
     // --- Scheduled notifications ---
     const NOTIF_KEY = 'schedule-tracker-notif';
