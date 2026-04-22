@@ -53,7 +53,9 @@ function generateICS() {
         curM = curM % 60;
         const dtEnd = icsDateTime(dayDate, curH, curM);
 
-        events += [
+        const isPrivate = task.private === true;
+
+        const lines = [
           'BEGIN:VEVENT',
           `UID:st-${weekId}-d${dayIndex}-t${taskIndex}@konskyrt`,
           `DTSTAMP:${stamp}`,
@@ -62,6 +64,10 @@ function generateICS() {
           `SUMMARY:[ST] ${task.name}`,
           `DESCRIPTION:Schedule Tracker - ${dayName}`,
           'STATUS:CONFIRMED',
+          `CLASS:${isPrivate ? 'PRIVATE' : 'PUBLIC'}`,
+          'X-MICROSOFT-CDO-BUSYSTATUS:BUSY'
+        ];
+        lines.push(
           'BEGIN:VALARM',
           'TRIGGER:-PT15M',
           'ACTION:DISPLAY',
@@ -69,7 +75,8 @@ function generateICS() {
           'END:VALARM',
           'END:VEVENT',
           ''
-        ].join('\r\n');
+        );
+        events += lines.join('\r\n');
         totalEvents++;
       });
     }
