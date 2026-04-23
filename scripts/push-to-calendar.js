@@ -14,7 +14,10 @@ function getCurrentMonday() {
 }
 
 function buildTasksForDay(dayName) {
-  return [...config.generalTasks, ...(config.daySpecificTasks[dayName] || [])];
+  if (config.dayTasks && Array.isArray(config.dayTasks[dayName])) {
+    return config.dayTasks[dayName].filter(t => t && t.name && t.name.trim());
+  }
+  return [...(config.generalTasks || []), ...((config.daySpecificTasks || {})[dayName] || [])];
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }

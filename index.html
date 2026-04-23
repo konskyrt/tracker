@@ -859,15 +859,65 @@
     // --- Save & Sync button ---
     document.getElementById('saveToCloud').addEventListener('click', () => pushRemoteState());
 
-    // --- Push to Calendar (triggers GitHub Actions workflow_dispatch) ---
-    // The same workflow also runs automatically every Sunday 18:00 UTC.
+    // --- Push to Calendar ---
+    // On click we (1) build an up-to-date task-config.json from the current
+    // week's tasks in the tracker, (2) commit it to the repo via GitHub API,
+    // and (3) dispatch the same push-calendar.yml workflow that runs every
+    // Sunday 18:00 UTC. That way the calendar mirrors the tracker UI
+    // (including tasks you added manually), not a stale static template.
     const GH_CONFIG = {
       owner: 'konskyrt',
       repo: 'tracker',
       workflow: 'push-calendar.yml',
-      ref: 'main'
+      ref: 'main',
+      configPath: 'scripts/task-config.json'
     };
     const GH_PAT_KEY = 'schedule-tracker-gh-pat';
+
+    // Metadata per known task name. Unknown tasks default to 60 min, public.
+    // Keep in sync with scripts/task-config.json when editing.
+    const TASK_META = {
+      'Review active projects':        { duration: 30,  private: false },
+      'Learn topic (expert session)':  { duration: 60,  private: true  },
+      'Cadmium full 4D preparation':   { duration: 90,  private: false },
+      'BIM2LOG app development':       { duration: 120, private: false },
+      'Gym workout':                   { duration: 60,  private: true  },
+      'Personal project work':         { duration: 90,  private: true  },
+      'Master work':                   { duration: 120, private: true  },
+      'Social activity':               { duration: 60,  private: true  },
+      'Hobby':                         { duration: 60,  private: true  },
+      'Life coach session':            { duration: 60,  private: true  },
+      'Outdoor activity':              { duration: 60,  private: true  },
+      'Financial planning':            { duration: 30,  private: true  },
+      'Meal prepping':                 { duration: 90,  private: true  }
+    };
+    const DEFAULT_TASK_DURATION = 60;
+    const DEFAULT_TASK_PRIVATE = false;
+
+    function buildTaskConfigFromState() {
+      const dayTasks = {};
+      DAYS.forEach((dayName, i) => {
+        const day = state.days[i];
+        const tasks = (day && day.tasks ? day.tasks : [])
+          .map(t => (t && t.text ? t.text.trim() : ''))
+          .filter(Boolean)
+          .map(name => {
+            const meta = TASK_META[name] || {};
+            return {
+              name,
+              duration: Number.isFinite(meta.duration) ? meta.duration : DEFAULT_TASK_DURATION,
+              private: meta.private === true ? true : DEFAULT_TASK_PRIVATE
+            };
+          });
+        dayTasks[dayName] = tasks;
+      });
+      return {
+        dayStartTime: '06:30',
+        timezone: 'Europe/Zurich',
+        days: DAYS.slice(),
+        dayTasks
+      };
+    }
 
     function getStoredPat() {
       return localStorage.getItem(GH_PAT_KEY) || '';
@@ -877,9 +927,9 @@
       const msg =
         'Paste a GitHub fine-grained personal access token.\n\n' +
         'It must be scoped to the repo "konskyrt/tracker" with:\n' +
-        '  • Actions: Read and write\n' +
-        '  • Contents: Read-only (or Read and write)\n\n' +
-        'Create one at: https://github.com/settings/personal-access-tokens\n' +
+        '  • Actions: Read and write    (to dispatch the workflow)\n' +
+        '  • Contents: Read and write   (to commit task-config.json)\n\n' +
+        'Create one at: https://github.com/settings/personal-access-tokens/new\n' +
         'The token is stored only in this browser (localStorage).';
       const pat = prompt(msg, '');
       if (!pat) return '';
@@ -888,9 +938,72 @@
       return trimmed;
     }
 
+    function utf8ToBase64(str) {
+      // Handle non-ASCII task names safely for the GitHub contents API.
+      const bytes = new TextEncoder().encode(str);
+      let bin = '';
+      bytes.forEach(b => { bin += String.fromCharCode(b); });
+      return btoa(bin);
+    }
+
+    async function ghFetch(pat, url, options = {}) {
+      return fetch(url, {
+        ...options,
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': 'Bearer ' + pat,
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+    }
+
+    async function commitTaskConfig(pat, config) {
+      const apiUrl = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.configPath}`;
+
+      const getRes = await ghFetch(pat, apiUrl + `?ref=${GH_CONFIG.ref}`);
+      let sha = null;
+      if (getRes.status === 200) {
+        const existing = await getRes.json();
+        sha = existing.sha;
+      } else if (getRes.status !== 404) {
+        const body = await getRes.text().catch(() => '');
+        throw new Error(`Couldn't read current task-config.json (HTTP ${getRes.status}): ${body}`);
+      }
+
+      const content = utf8ToBase64(JSON.stringify(config, null, 2) + '\n');
+      const putBody = {
+        message: 'Update task-config.json from Schedule Tracker UI',
+        content,
+        branch: GH_CONFIG.ref
+      };
+      if (sha) putBody.sha = sha;
+
+      const putRes = await ghFetch(pat, apiUrl, {
+        method: 'PUT',
+        body: JSON.stringify(putBody)
+      });
+
+      if (putRes.status === 200 || putRes.status === 201) return true;
+      if (putRes.status === 409) return true;
+      const body = await putRes.text().catch(() => '');
+      throw new Error(`Commit failed (HTTP ${putRes.status}): ${body}`);
+    }
+
+    async function dispatchWorkflow(pat) {
+      const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/actions/workflows/${GH_CONFIG.workflow}/dispatches`;
+      const res = await ghFetch(pat, url, {
+        method: 'POST',
+        body: JSON.stringify({ ref: GH_CONFIG.ref })
+      });
+      if (res.status === 204) return true;
+      const body = await res.text().catch(() => '');
+      throw new Error(`Dispatch failed (HTTP ${res.status}): ${body}`);
+    }
+
     async function dispatchCalendarWorkflow() {
       const btn = document.getElementById('pushToCalendar');
-
       if (btn.classList.contains('syncing')) return;
 
       let pat = getStoredPat();
@@ -901,54 +1014,59 @@
 
       btn.classList.remove('saved', 'failed');
       btn.classList.add('syncing');
-      btn.textContent = 'Pushing…';
-
-      const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/actions/workflows/${GH_CONFIG.workflow}/dispatches`;
+      btn.textContent = 'Syncing tasks…';
 
       try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': 'Bearer ' + pat,
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ref: GH_CONFIG.ref })
-        });
+        const config = buildTaskConfigFromState();
+        const totalTasks = Object.values(config.dayTasks).reduce((n, list) => n + list.length, 0);
+        if (totalTasks === 0) {
+          btn.classList.remove('syncing');
+          btn.classList.add('failed');
+          btn.textContent = 'No tasks to push';
+          alert('Your week has no tasks. Add at least one task before pushing to the calendar.');
+          return;
+        }
+
+        await commitTaskConfig(pat, config);
+
+        btn.textContent = 'Dispatching…';
+        await dispatchWorkflow(pat);
 
         btn.classList.remove('syncing');
-
-        if (res.status === 204) {
-          btn.classList.add('saved');
-          btn.textContent = 'Pushed ✓ — check Actions';
-          setTimeout(() => {
-            btn.classList.remove('saved');
-            btn.textContent = 'Push to Calendar';
-          }, 5000);
-          return;
-        }
-
-        if (res.status === 401 || res.status === 403) {
-          localStorage.removeItem(GH_PAT_KEY);
-          btn.classList.add('failed');
-          btn.textContent = 'Auth failed — click to retry';
-          const body = await res.text().catch(() => '');
-          console.error('GitHub auth failed (' + res.status + '):', body);
-          alert('GitHub rejected the token (' + res.status + '). It has been cleared — click the button again to paste a new one.');
-          return;
-        }
-
-        const body = await res.text().catch(() => '');
-        btn.classList.add('failed');
-        btn.textContent = 'Push failed — retry';
-        console.error('Workflow dispatch failed:', res.status, body);
-        alert('Workflow dispatch failed (HTTP ' + res.status + '). See console for details.');
+        btn.classList.add('saved');
+        btn.textContent = 'Pushed ✓ — check Actions';
+        setTimeout(() => {
+          btn.classList.remove('saved');
+          btn.textContent = 'Push to Calendar';
+        }, 5000);
       } catch (err) {
         btn.classList.remove('syncing');
         btn.classList.add('failed');
-        btn.textContent = 'Network error — retry';
-        console.error('Push to Calendar network error:', err);
+
+        const msg = String(err && err.message || err);
+        const isAuth = /HTTP (401|403)/.test(msg);
+        const isNotFound = /HTTP 404/.test(msg);
+
+        if (isAuth) {
+          localStorage.removeItem(GH_PAT_KEY);
+          btn.textContent = 'Auth/permission failed — click to retry';
+          console.error('Push to Calendar — auth failure:', err);
+          alert(
+            'GitHub rejected the request.\n\n' +
+            'The token has been cleared. Make sure the token has:\n' +
+            '  • Actions: Read and write\n' +
+            '  • Contents: Read and write  (required to commit task-config.json)\n\n' +
+            'Click the button again to paste a new token.'
+          );
+        } else if (isNotFound) {
+          btn.textContent = 'Repo/path not found — check console';
+          console.error('Push to Calendar — 404:', err);
+          alert('GitHub returned 404. Check that the token has access to konskyrt/tracker and that scripts/task-config.json still exists on main.');
+        } else {
+          btn.textContent = 'Push failed — retry';
+          console.error('Push to Calendar — error:', err);
+          alert('Push to Calendar failed:\n\n' + msg);
+        }
       }
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-tracker-v9';
+const CACHE_NAME = 'schedule-tracker-v10';
 const ASSETS = [
   './',
   './index.html',
