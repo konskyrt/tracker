@@ -1,28 +1,394 @@
 {
   "dayStartTime": "06:30",
   "timezone": "Europe/Zurich",
-  "generalTasks": [
-    { "name": "Review active projects", "duration": 30 },
-    { "name": "Learn topic (expert session)", "duration": 60, "private": true },
-    { "name": "Cadmium full 4D preparation", "duration": 90 },
-    { "name": "BIM2LOG app development", "duration": 120 },
-    { "name": "Gym workout", "duration": 60, "private": true },
-    { "name": "Personal project work", "duration": 90, "private": true },
-    { "name": "Master work", "duration": 120, "private": true },
-    { "name": "Social activity", "duration": 60, "private": true },
-    { "name": "Hobby", "duration": 60, "private": true }
+  "days": [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
   ],
-  "daySpecificTasks": {
+  "dayTasks": {
     "Monday": [
-      { "name": "Life coach session", "duration": 60, "private": true },
-      { "name": "Outdoor activity", "duration": 60, "private": true }
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Life coach session",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Outdoor activity",
+        "duration": 60,
+        "private": true
+      }
+    ],
+    "Tuesday": [
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      }
+    ],
+    "Wednesday": [
+      {
+        "name": "Master Audio annotation",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Concrete crack detection project",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "ELP update",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Infocon project",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Classifications",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "New task",
+        "duration": 60,
+        "private": false
+      }
+    ],
+    "Thursday": [
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      }
     ],
     "Friday": [
-      { "name": "Financial planning", "duration": 30, "private": true }
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Financial planning",
+        "duration": 30,
+        "private": true
+      }
+    ],
+    "Saturday": [
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      }
     ],
     "Sunday": [
-      { "name": "Meal prepping", "duration": 90, "private": true }
+      {
+        "name": "Review active projects",
+        "duration": 30,
+        "private": false
+      },
+      {
+        "name": "Learn topic (expert session)",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Cadmium full 4D preparation",
+        "duration": 90,
+        "private": false
+      },
+      {
+        "name": "BIM2LOG app development",
+        "duration": 120,
+        "private": false
+      },
+      {
+        "name": "Gym workout",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Personal project work",
+        "duration": 90,
+        "private": true
+      },
+      {
+        "name": "Master work",
+        "duration": 120,
+        "private": true
+      },
+      {
+        "name": "Social activity",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Hobby",
+        "duration": 60,
+        "private": true
+      },
+      {
+        "name": "Meal prepping",
+        "duration": 90,
+        "private": true
+      }
     ]
-  },
-  "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  }
 }
