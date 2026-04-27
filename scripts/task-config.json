@@ -33,6 +33,11 @@
         "private": false
       },
       {
+        "name": "Construction audio annotation",
+        "duration": 60,
+        "private": false
+      },
+      {
         "name": "Review active projects",
         "duration": 30,
         "private": false
@@ -89,6 +94,11 @@
       },
       {
         "name": "Concrete crack detection",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "New task",
         "duration": 60,
         "private": false
       }
