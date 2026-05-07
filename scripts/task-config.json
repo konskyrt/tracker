@@ -13,31 +13,6 @@
   "dayTasks": {
     "Monday": [
       {
-        "name": "4D REcap doc",
-        "duration": 60,
-        "private": false
-      },
-      {
-        "name": "ELP update",
-        "duration": 60,
-        "private": false
-      },
-      {
-        "name": "Classifications and improve filtering",
-        "duration": 60,
-        "private": false
-      },
-      {
-        "name": "Prometheus",
-        "duration": 60,
-        "private": false
-      },
-      {
-        "name": "Construction audio annotation",
-        "duration": 60,
-        "private": false
-      },
-      {
         "name": "Review active projects",
         "duration": 30,
         "private": false
@@ -91,16 +66,6 @@
         "name": "Outdoor activity",
         "duration": 60,
         "private": true
-      },
-      {
-        "name": "Concrete crack detection",
-        "duration": 60,
-        "private": false
-      },
-      {
-        "name": "New task",
-        "duration": 60,
-        "private": false
       }
     ],
     "Tuesday": [
@@ -148,6 +113,21 @@
         "name": "Hobby",
         "duration": 60,
         "private": true
+      },
+      {
+        "name": "Object to task connection",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Master in Business - Selling",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Personal business",
+        "duration": 60,
+        "private": false
       }
     ],
     "Wednesday": [
@@ -204,18 +184,33 @@
         "private": false
       },
       {
-        "name": "Learn topic (expert session)",
+        "name": "Move 4D projects to folders",
         "duration": 60,
-        "private": true
-      },
-      {
-        "name": "Cadmium full 4D preparation",
-        "duration": 90,
         "private": false
       },
       {
-        "name": "BIM2LOG app development",
-        "duration": 120,
+        "name": "Create documents (4D DOC, 4D Technical DOC)",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Object to task connection",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Classifications folder",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Floorplan segmentation",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Master in Business - Selling",
+        "duration": 60,
         "private": false
       },
       {
@@ -224,22 +219,22 @@
         "private": true
       },
       {
-        "name": "Personal project work",
-        "duration": 90,
-        "private": true
-      },
-      {
         "name": "Master work",
         "duration": 120,
         "private": true
       },
       {
-        "name": "Social activity",
+        "name": "Remove cursor double sub",
         "duration": 60,
-        "private": true
+        "private": false
       },
       {
-        "name": "Hobby",
+        "name": "ELP complete 4D",
+        "duration": 60,
+        "private": false
+      },
+      {
+        "name": "Social activity",
         "duration": 60,
         "private": true
       }
