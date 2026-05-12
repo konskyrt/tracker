@@ -103,34 +103,89 @@
       background:conic-gradient(var(--purple) calc(var(--p)*360deg), rgba(255,255,255,.1) 0);
       display:grid;place-items:center;flex:0 0 auto;
     }
-    .small-ring::before, .donut::before{
+    .small-ring::before{
       content:"";position:absolute;inset:12px;border-radius:50%;background:#0b1030;
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
     }
-    .small-ring strong, .donut strong{position:relative;z-index:1;font-size:20px}
+    .small-ring strong{position:relative;z-index:1;font-size:20px}
 
-    .progress-flex{display:flex;gap:18px;align-items:center}
-    .bars{flex:1}
-    .bar-grid{display:flex;gap:12px;align-items:flex-end;height:140px;padding:8px 2px 20px}
-    .daybar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
-    .daybar .bar{
-      width:100%;max-width:34px;border-radius:12px 12px 4px 4px;
-      background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(208,216,235,.84));
-      position:relative;overflow:hidden;min-height:24px;
+    /* AI assistant panel */
+    .ai-panel{display:flex;flex-direction:column;min-height:340px;max-height:560px}
+    .ai-header{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:10px;position:relative;z-index:1;
     }
-    .daybar .fill{
-      position:absolute;left:0;right:0;bottom:0;
-      background:linear-gradient(180deg, var(--teal), #5a8cff);
-      border-radius:12px 12px 4px 4px;
+    .ai-header h3{margin:0}
+    .ai-header-actions{display:flex;gap:6px}
+    .ai-icon-btn{
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+      color:var(--muted);padding:5px 10px;border-radius:10px;font-size:11px;
+      font-weight:600;cursor:pointer;box-shadow:none;letter-spacing:.04em;
+      text-transform:uppercase;
     }
-    .daybar label{font-size:12px;color:var(--muted)}
-    .donut{
-      --p:0.14;
-      width:150px;height:150px;border-radius:50%;position:relative;
-      background:conic-gradient(var(--teal) calc(var(--p)*360deg), rgba(255,255,255,.16) 0);
-      display:grid;place-items:center;flex:0 0 auto;
+    .ai-icon-btn:hover{color:var(--text);background:rgba(255,255,255,.1)}
+    .ai-messages{
+      flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+      padding:4px 4px 8px;position:relative;z-index:1;min-height:120px;
+      scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;
     }
-    .donut strong{font-size:34px}
+    .ai-messages::-webkit-scrollbar{width:6px}
+    .ai-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+    .ai-msg{display:flex;max-width:92%}
+    .ai-msg-user{align-self:flex-end;justify-content:flex-end}
+    .ai-msg-bot{align-self:flex-start}
+    .ai-bubble{
+      padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;
+      white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;
+    }
+    .ai-msg-user .ai-bubble{
+      background:linear-gradient(135deg, var(--purple), #3b68ff);
+      color:#fff;border-bottom-right-radius:4px;
+    }
+    .ai-msg-bot .ai-bubble{
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);
+      color:var(--text);border-bottom-left-radius:4px;
+    }
+    .ai-msg-bot .ai-bubble strong{color:var(--teal)}
+    .ai-msg-bot .ai-bubble code{
+      background:rgba(0,0,0,.35);padding:1px 5px;border-radius:5px;font-size:12px;
+    }
+    .ai-msg-error .ai-bubble{
+      background:rgba(255,95,178,.12);border-color:rgba(255,95,178,.3);color:#ffd1e6;
+    }
+    .ai-msg-intro .ai-bubble{font-style:italic;color:var(--muted)}
+    .ai-typing{display:inline-flex;gap:4px;align-items:center;padding:2px 0}
+    .ai-typing span{
+      width:6px;height:6px;border-radius:50%;background:var(--muted);
+      animation:ai-dot 1.2s infinite ease-in-out;
+    }
+    .ai-typing span:nth-child(2){animation-delay:.2s}
+    .ai-typing span:nth-child(3){animation-delay:.4s}
+    @keyframes ai-dot{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+    .ai-quick-row{
+      display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;position:relative;z-index:1;
+    }
+    .ai-quick{
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      color:var(--text);padding:6px 10px;border-radius:999px;font-size:11.5px;
+      font-weight:600;cursor:pointer;box-shadow:none;
+    }
+    .ai-quick:hover{background:rgba(53,224,196,.12);border-color:rgba(53,224,196,.3)}
+    .ai-input-row{
+      display:flex;gap:8px;align-items:center;position:relative;z-index:1;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;padding:6px 6px 6px 14px;
+    }
+    .ai-input-text{
+      flex:1;background:transparent;border:none;color:var(--text);outline:none;
+      font-size:13.5px;padding:8px 0;min-width:0;
+    }
+    .ai-send-btn{
+      padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;
+      background:linear-gradient(135deg, var(--teal), #2bc4a8);color:#042337;
+      box-shadow:none;
+    }
+    .ai-send-btn:disabled{opacity:.5;cursor:not-allowed}
 
     /* Goals panel */
     .goals-section{margin-bottom:16px;position:relative;z-index:1}
@@ -241,8 +296,8 @@
     @media (max-width: 760px){
       .topbar{align-items:flex-start;flex-direction:column}
       .days{grid-template-columns:1fr}
-      .progress-flex{flex-direction:column;align-items:flex-start}
       .brand{font-size:28px}
+      .ai-panel{max-height:480px}
     }
 
     /* Auth gate */
@@ -317,17 +372,30 @@
         </div>
       </div>
 
-      <div class="panel">
-        <h3>Overall Progress</h3>
-        <div class="progress-flex">
-          <div class="bars">
-            <div class="bar-grid" id="barGrid"></div>
-          </div>
-          <div class="donut" id="overallDonut" style="--p:0">
-            <strong id="overallPct">0%</strong>
+      <div class="panel ai-panel">
+        <div class="ai-header">
+          <h3>Ask AI</h3>
+          <div class="ai-header-actions">
+            <button class="ai-icon-btn" id="aiClear" title="Clear chat">Clear</button>
+            <button class="ai-icon-btn" id="aiSetKey" title="Set / change Gemini API key">Key</button>
           </div>
         </div>
-        <div class="muted" id="overallCaption" style="margin-top:10px">0 / 0 completed</div>
+        <div class="ai-messages" id="aiMessages">
+          <div class="ai-msg ai-msg-bot ai-msg-intro">
+            <div class="ai-bubble">
+              Hi — I can see your schedule and goals. Ask me anything about your day, what to focus on, or for a quick reality check on your week.
+            </div>
+          </div>
+        </div>
+        <div class="ai-quick-row" id="aiQuickRow">
+          <button class="ai-quick" data-prompt="Based on today's remaining tasks and my long-term goals, what should I prioritise next?">Today's priorities</button>
+          <button class="ai-quick" data-prompt="Looking at this week's progress, what am I neglecting? Be honest.">What am I neglecting?</button>
+          <button class="ai-quick" data-prompt="Suggest 3 small actions this week that move me closer to my monthly goals.">Move my goals forward</button>
+        </div>
+        <form class="ai-input-row" id="aiForm">
+          <input type="text" id="aiInput" class="ai-input-text" placeholder="Ask about your week, goals, or life…" autocomplete="off" />
+          <button type="submit" id="aiSend" class="ai-send-btn">Ask</button>
+        </form>
       </div>
 
       <div class="panel">
@@ -550,25 +618,10 @@
       const allDone  = totals.reduce((a,b) => a + b.done, 0);
       const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
 
-      document.getElementById('overallPct').textContent = pct + '%';
-      document.getElementById('overallDonut').style.setProperty('--p', pct / 100);
-      document.getElementById('overallCaption').textContent = allDone + ' / ' + allTotal + ' completed';
       document.getElementById('miniPct').textContent = pct + '%';
       document.getElementById('miniRing').style.setProperty('--p', pct / 100);
       document.getElementById('completeCount').textContent = allDone + ' completed';
       document.getElementById('remainingCount').textContent = Math.max(allTotal - allDone, 0) + ' remaining';
-
-      const barGrid = document.getElementById('barGrid');
-      barGrid.innerHTML = '';
-      totals.forEach((t, i) => {
-        const div = document.createElement('div');
-        div.className = 'daybar';
-        const ratio = t.total ? (t.done / t.total) : 0;
-        div.innerHTML =
-          '<div class="bar"><div class="fill" style="height:' + Math.max(12, ratio * 100) + '%"></div></div>' +
-          '<label>' + SHORT[i] + '</label>';
-        barGrid.appendChild(div);
-      });
     }
 
     function renderGoals() {
@@ -1172,6 +1225,269 @@
       setInterval(checkNotifSchedule, 60000);
     }
 
+    // --- AI Assistant (Gemini) ---
+    const GEMINI_KEY_LS = 'schedule-tracker-gemini-key';
+    const GEMINI_CHAT_LS = 'schedule-tracker-chat-v1';
+    const GEMINI_MODEL = 'gemini-2.5-flash';
+    const GEMINI_MAX_HISTORY = 16;
+    let aiChat = [];
+    let aiBusy = false;
+
+    function loadChat() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(GEMINI_CHAT_LS) || '[]');
+        if (Array.isArray(saved)) aiChat = saved.slice(-GEMINI_MAX_HISTORY);
+      } catch(e) { aiChat = []; }
+    }
+
+    function saveChat() {
+      try {
+        localStorage.setItem(GEMINI_CHAT_LS, JSON.stringify(aiChat.slice(-GEMINI_MAX_HISTORY)));
+      } catch(e) {}
+    }
+
+    function getGeminiKey() {
+      return localStorage.getItem(GEMINI_KEY_LS) || '';
+    }
+
+    function promptForGeminiKey() {
+      const msg =
+        'Paste your Google Gemini API key.\n\n' +
+        'Get a free key at: https://aistudio.google.com/app/apikey\n' +
+        'The key is stored only in this browser (localStorage).';
+      const k = prompt(msg, getGeminiKey());
+      if (k === null) return '';
+      const trimmed = k.trim();
+      if (!trimmed) return '';
+      localStorage.setItem(GEMINI_KEY_LS, trimmed);
+      return trimmed;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderInlineMd(s) {
+      let html = escapeHtml(s);
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function appendChatMessage(role, text, opts = {}) {
+      const container = document.getElementById('aiMessages');
+      const wrap = document.createElement('div');
+      wrap.className = 'ai-msg ai-msg-' + role + (opts.error ? ' ai-msg-error' : '');
+      const bubble = document.createElement('div');
+      bubble.className = 'ai-bubble';
+      if (opts.typing) {
+        bubble.innerHTML = '<span class="ai-typing"><span></span><span></span><span></span></span>';
+        wrap.dataset.typing = '1';
+      } else {
+        bubble.innerHTML = renderInlineMd(text);
+      }
+      wrap.appendChild(bubble);
+      container.appendChild(wrap);
+      container.scrollTop = container.scrollHeight;
+      return wrap;
+    }
+
+    function renderChatHistory() {
+      const container = document.getElementById('aiMessages');
+      const intro = container.querySelector('.ai-msg-intro');
+      container.innerHTML = '';
+      if (intro && aiChat.length === 0) container.appendChild(intro);
+      aiChat.forEach(m => appendChatMessage(m.role, m.text));
+    }
+
+    function buildAssistantContext() {
+      const weekStart = new Date(state.weekStart + 'T00:00:00');
+      const weekEnd = addDays(weekStart, 6);
+      const today = new Date();
+      const dow = today.getDay();
+      const todayIdx = dow === 0 ? 6 : dow - 1;
+
+      const lines = [];
+      lines.push('You are a calm, focused personal coach embedded inside the user\'s weekly schedule tracker.');
+      lines.push('You can see their current week\'s tasks (with completion status) and their long-term goals.');
+      lines.push('Style: concise, kind, direct. Default to 2–6 sentences. Use bullet points only when listing concrete actions, and never more than 5.');
+      lines.push('Ground every suggestion in the actual tasks and goals below. Reference specific items by name when it helps.');
+      lines.push('If the user asks something unrelated to their schedule/life/goals, answer briefly but redirect to what matters.');
+      lines.push('');
+      lines.push('Today is ' + today.toDateString() + ' (' + DAYS[todayIdx] + ').');
+      lines.push('Current week: ' + fmtDate(weekStart) + ' → ' + fmtDate(weekEnd) + '.');
+      lines.push('');
+      lines.push('## Weekly schedule');
+      state.days.forEach((d, i) => {
+        const date = addDays(weekStart, i);
+        const total = d.tasks.length;
+        const done = d.tasks.filter(t => t.done).length;
+        lines.push('### ' + d.day + ' (' + fmtDate(date) + ') — ' + done + '/' + total + ' done' + (i === todayIdx ? ' [TODAY]' : ''));
+        if (d.tasks.length === 0) {
+          lines.push('- (no tasks)');
+        } else {
+          d.tasks.forEach(t => {
+            const status = t.done ? '[x]' : '[ ]';
+            const text = (t.text || '').trim() || '(empty)';
+            lines.push('- ' + status + ' ' + text);
+          });
+        }
+      });
+
+      const monthly = (state.goals.monthly || []).filter(g => (g.text || '').trim());
+      const weekly  = (state.goals.weekly  || []).filter(g => (g.text || '').trim());
+
+      lines.push('');
+      lines.push('## Long-term goals (next months)');
+      if (monthly.length === 0) {
+        lines.push('- (none set)');
+      } else {
+        monthly.forEach(g => {
+          const status = g.done ? '[x]' : '[ ]';
+          const deadline = g.deadline ? ' (target ' + g.deadline + ')' : '';
+          lines.push('- ' + status + ' ' + g.text.trim() + deadline);
+        });
+      }
+
+      lines.push('');
+      lines.push('## Goals for the next weeks');
+      if (weekly.length === 0) {
+        lines.push('- (none set)');
+      } else {
+        weekly.forEach(g => {
+          const status = g.done ? '[x]' : '[ ]';
+          lines.push('- ' + status + ' ' + g.text.trim());
+        });
+      }
+
+      return lines.join('\n');
+    }
+
+    async function callGemini(question) {
+      let key = getGeminiKey();
+      if (!key) {
+        key = promptForGeminiKey();
+        if (!key) throw new Error('No API key set. Click "Key" to add one.');
+      }
+
+      const systemPrompt = buildAssistantContext();
+      const contents = aiChat.slice(-GEMINI_MAX_HISTORY).map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+      contents.push({ role: 'user', parts: [{ text: question }] });
+
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+                  encodeURIComponent(GEMINI_MODEL) + ':generateContent?key=' +
+                  encodeURIComponent(key);
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1024, topP: 0.95 }
+        })
+      });
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        if (res.status === 400 && /API key/i.test(body)) {
+          localStorage.removeItem(GEMINI_KEY_LS);
+          throw new Error('API key was rejected. Click "Key" to enter a new one.');
+        }
+        if (res.status === 429) throw new Error('Gemini free tier rate limit hit. Try again in a minute.');
+        throw new Error('Gemini API error (HTTP ' + res.status + '): ' + body.slice(0, 240));
+      }
+
+      const data = await res.json();
+      const cand = data.candidates && data.candidates[0];
+      const text = cand && cand.content && cand.content.parts &&
+                   cand.content.parts.map(p => p.text || '').join('').trim();
+      if (!text) {
+        const block = data.promptFeedback && data.promptFeedback.blockReason;
+        throw new Error(block ? 'Response blocked: ' + block : 'Empty response from Gemini.');
+      }
+      return text;
+    }
+
+    async function sendAIMessage(question) {
+      if (aiBusy) return;
+      question = (question || '').trim();
+      if (!question) return;
+
+      aiBusy = true;
+      const sendBtn = document.getElementById('aiSend');
+      const input   = document.getElementById('aiInput');
+      sendBtn.disabled = true;
+      input.disabled = true;
+
+      const intro = document.querySelector('.ai-msg-intro');
+      if (intro) intro.remove();
+
+      aiChat.push({ role: 'user', text: question });
+      saveChat();
+      appendChatMessage('user', question);
+      input.value = '';
+
+      const typingNode = appendChatMessage('bot', '', { typing: true });
+
+      try {
+        const answer = await callGemini(question);
+        typingNode.remove();
+        aiChat.push({ role: 'bot', text: answer });
+        if (aiChat.length > GEMINI_MAX_HISTORY) aiChat = aiChat.slice(-GEMINI_MAX_HISTORY);
+        saveChat();
+        appendChatMessage('bot', answer);
+      } catch (err) {
+        typingNode.remove();
+        const msg = err && err.message ? err.message : String(err);
+        appendChatMessage('bot', msg, { error: true });
+        console.error('Gemini error:', err);
+      } finally {
+        aiBusy = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    function initAIPanel() {
+      loadChat();
+      renderChatHistory();
+
+      document.getElementById('aiForm').addEventListener('submit', e => {
+        e.preventDefault();
+        sendAIMessage(document.getElementById('aiInput').value);
+      });
+
+      document.querySelectorAll('.ai-quick').forEach(btn => {
+        btn.addEventListener('click', () => sendAIMessage(btn.dataset.prompt));
+      });
+
+      document.getElementById('aiClear').addEventListener('click', () => {
+        if (aiChat.length === 0 || confirm('Clear the chat history?')) {
+          aiChat = [];
+          saveChat();
+          document.getElementById('aiMessages').innerHTML =
+            '<div class="ai-msg ai-msg-bot ai-msg-intro">' +
+              '<div class="ai-bubble">' +
+                'Hi — I can see your schedule and goals. Ask me anything about your day, what to focus on, or for a quick reality check on your week.' +
+              '</div>' +
+            '</div>';
+        }
+      });
+
+      document.getElementById('aiSetKey').addEventListener('click', () => {
+        promptForGeminiKey();
+      });
+    }
+
     // --- Auth gate ---
     const AUTH_KEY = 'schedule-tracker-auth';
     const PASS_HASH = '74769fa49d40c7fb1367346981bf7bd927bf15c0ccfe323aa3ee7993692f857b';
@@ -1186,6 +1502,7 @@
       document.getElementById('authGate').classList.add('hidden');
       render();
       initNotifications();
+      initAIPanel();
       pullRemoteState();
     }
 
